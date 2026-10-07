@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty name="PASTA_LOGS" source="logging.file.path" defaultValue="logs"/>
+
+    <property name="PADRAO_CONSOLE"
+              value="%clr(%d{HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%X{requestId:--}]){magenta} %clr([%X{usuario:-anonimo}]){blue} %clr(%-38.38logger{36}){cyan} : %replace(%m){'[\r\n]+', ' '}%n"/>
+    <property name="PADRAO_ARQUIVO"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [req=%X{requestId:--}] [usuario=%X{usuario:-anonimo}] %logger{40} - %replace(%m){'[\r\n]+', ' '}%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PADRAO_CONSOLE}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <springProfile name="test">
+        <logger name="br.org.edu.ifrn.usuarios" level="DEBUG"/>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="!test">
+        <appender name="ARQUIVO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${PASTA_LOGS}/usuarios-api.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${PASTA_LOGS}/historico/usuarios-api-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                <maxFileSize>10MB</maxFileSize>
+                <maxHistory>30</maxHistory>
+                <totalSizeCap>1GB</totalSizeCap>
+            </rollingPolicy>
+            <encoder>
+                <pattern>${PADRAO_ARQUIVO}</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <appender name="ERROS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>ERROR</level>
+            </filter>
+            <file>${PASTA_LOGS}/erros.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${PASTA_LOGS}/historico/erros-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                <maxFileSize>10MB</maxFileSize>
+                <maxHistory>90</maxHistory>
+            </rollingPolicy>
+            <encoder>
+                <pattern>${PADRAO_ARQUIVO}</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <appender name="TRILHA_AUDITORIA" class="ch.qos.logback.core.FileAppender">
+            <file>${PASTA_LOGS}/auditoria.log</file>
+            <append>true</append>
+            <encoder>
+                <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX, UTC} [req=%X{requestId:--}] %m%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <logger name="AUDITORIA" level="INFO">
+            <appender-ref ref="TRILHA_AUDITORIA"/>
+        </logger>
+        <logger name="br.org.edu.ifrn.usuarios" level="DEBUG"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ARQUIVO"/>
+            <appender-ref ref="ERROS"/>
+        </root>
+    </springProfile>
+
+</configuration>
