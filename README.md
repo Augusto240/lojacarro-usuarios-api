@@ -38,6 +38,14 @@ o ultimo gerente nao pode virar vendedor.
 Toda requisicao e registrada com um id (`X-Request-Id`). Quando a chamada vem da LojaCarro o id e o mesmo dos logs
 de la. Os arquivos ficam em `logs/`: `usuarios-api.log`, `erros.log` e `auditoria.log`.
 
+Cadastro, edicao e exclusao de usuario tambem viram uma mensagem (`LogOperacaoDTO` em JSON, modulo `USUARIO`) na
+fila `augusto_erick` do RabbitMQ, que o lojacarro-log salva. O RabbitMQ configurado e o do professor
+(15.228.215.36, usuario `aluno`). A senha vem da variavel `RABBITMQ_SENHA` e o resto da pra trocar com
+`RABBITMQ_HOST` e `RABBITMQ_USUARIO`.
+
+O script de teste do banco (`banco/script-teste.sql`) fica no repositorio da LojaCarro e ja cria a tabela
+`usuario` com alguns usuarios.
+
 ## Testes
 
 ```

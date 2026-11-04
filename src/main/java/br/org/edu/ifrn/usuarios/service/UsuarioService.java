@@ -1,15 +1,19 @@
 package br.org.edu.ifrn.usuarios.service;
 
+import br.org.edu.ifrn.usuarios.dto.LogOperacaoDTO;
 import br.org.edu.ifrn.usuarios.dto.UsuarioRequest;
 import br.org.edu.ifrn.usuarios.model.Cargo;
 import br.org.edu.ifrn.usuarios.model.Usuario;
+import br.org.edu.ifrn.usuarios.rabbitmq.Enviar;
 import br.org.edu.ifrn.usuarios.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 
@@ -23,9 +27,11 @@ public class UsuarioService {
     private static final String HTML = "(?i)(<[^>]*>|javascript:|onerror=|onload=)";
 
     private final UsuarioRepository usuarioRepository;
+    private final Enviar enviar;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, Enviar enviar) {
         this.usuarioRepository = usuarioRepository;
+        this.enviar = enviar;
     }
 
     public List<Usuario> listar() {
@@ -56,6 +62,7 @@ public class UsuarioService {
         log.info("Usuario '{}' cadastrado com id {} e cargo {} por {}", novo.getNome(), novo.getId(), cargo,
                 operador.getNome());
         auditoria.info("acao=USUARIO_CRIADO por=\"{}\" usuario=\"{}\"", operador.getNome(), novo);
+        avisarModuloDeLog("USUARIO_CRIADO", operador, novo);
         return novo;
     }
 
@@ -77,6 +84,7 @@ public class UsuarioService {
 
         log.info("Usuario {} atualizado por {}: {} -> {}", id, operador.getNome(), antes, salvo);
         auditoria.info("acao=USUARIO_ATUALIZADO por=\"{}\" antes=\"{}\" depois=\"{}\"", operador.getNome(), antes, salvo);
+        avisarModuloDeLog("USUARIO_ATUALIZADO", operador, salvo);
         return salvo;
     }
 
@@ -92,6 +100,12 @@ public class UsuarioService {
 
         log.info("Usuario {} excluido por {}", usuario, operador.getNome());
         auditoria.info("acao=USUARIO_EXCLUIDO por=\"{}\" usuario=\"{}\"", operador.getNome(), usuario);
+        avisarModuloDeLog("USUARIO_EXCLUIDO", operador, usuario);
+    }
+
+    private void avisarModuloDeLog(String operacao, Usuario operador, Usuario usuario) {
+        enviar.enviarMensagem(new LogOperacaoDTO("USUARIO", operacao, LocalDateTime.now().withNano(0),
+                operador.getId(), operador.getNome(), usuario.getId(), usuario.toString(), MDC.get("requestId")));
     }
 
     private String validarNome(String nomeRecebido) {

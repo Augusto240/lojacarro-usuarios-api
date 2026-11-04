@@ -3,6 +3,7 @@ package br.org.edu.ifrn.usuarios.service;
 import br.org.edu.ifrn.usuarios.dto.UsuarioRequest;
 import br.org.edu.ifrn.usuarios.model.Cargo;
 import br.org.edu.ifrn.usuarios.model.Usuario;
+import br.org.edu.ifrn.usuarios.rabbitmq.Enviar;
 import br.org.edu.ifrn.usuarios.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class UsuarioServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private Enviar enviar;
 
     @InjectMocks
     private UsuarioService usuarioService;
